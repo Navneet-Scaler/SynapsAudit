@@ -19,7 +19,7 @@ from src.regression import RegressionEngine
 from src.database import AuditDatabase
 from src.parser import ClinicalParser
 from src.rules import RuleEngine
-from src.metrics import compute_classification_metrics, compute_cohens_kappa, calculate_cdri
+from src.metrics import compute_classification_metrics, compute_cohens_kappa, calculate_cdri, calculate_financial_impact
 
 # Page configuration
 st.set_page_config(
@@ -243,7 +243,6 @@ unit_mismatch_rate = unit_mismatch / total_records if total_records > 0 else 0.0
 # Compute dynamic financial impact metrics
 violations_list = [{"error_type": row["error_type"], "risk_score": row["risk_score"]} 
                    for _, row in filtered_audit_df[filtered_audit_df["model_version"] == selected_model].iterrows()]
-from src.metrics import calculate_financial_impact
 fin_metrics = calculate_financial_impact(violations_list)
 active_leakage = fin_metrics["revenue_leakage"]
 active_liability = fin_metrics["rejection_liability"]
