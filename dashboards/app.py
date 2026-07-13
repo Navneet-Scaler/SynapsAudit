@@ -210,47 +210,45 @@ st.markdown(
 # ---------------------------------------------------------
 # Metric Calculation
 # ---------------------------------------------------------
-total_records = len(encounters)
-# Compute Exact Match Accuracy
-v1_preds = predictions[predictions["model_version"] == "clinical-nlp-v1"]
-v2_preds = predictions[predictions["model_version"] == "clinical-nlp-v2"]
+# Filter encounters by specialty if selected
+filtered_encounters = encounters
+if selected_specialty != "All":
+    filtered_encounters = encounters[encounters["specialty"] == selected_specialty]
 
-v1_merged = pd.merge(encounters, v1_preds, on="record_id")
-v2_merged = pd.merge(encounters, v2_preds, on="record_id")
+total_records = len(filtered_encounters)
 
-v1_em_matches = sum(v1_merged["predicted_codes"] == v1_merged["ground_truth_codes"])
-v2_em_matches = sum(v2_merged["predicted_codes"] == v2_merged["ground_truth_codes"])
+# Filter predictions and audits based on selected specialty
+filtered_record_ids = set(filtered_encounters["record_id"])
+filtered_predictions = predictions[predictions["record_id"].isin(filtered_record_ids)]
+filtered_audit_df = audit_df[audit_df["record_id"].isin(filtered_record_ids)]
 
-v1_em_acc = v1_em_matches / total_records if total_records > 0 else 0.0
-v2_em_acc = v2_em_matches / total_records if total_records > 0 else 0.0
+# Compute Exact Match Accuracy for selected model
+active_preds = filtered_predictions[filtered_predictions["model_version"] == selected_model]
+active_merged = pd.merge(filtered_encounters, active_preds, on="record_id")
+em_matches = sum(active_merged["predicted_codes"] == active_merged["ground_truth_codes"])
+active_em = em_matches / total_records if total_records > 0 else 0.0
 
-# Compute Modifier Accuracy
-# Modifier 25 rule: eligible if has procedure and E/M (e.g. REC001 Cardiology has both 93451 & 99213)
-# Let's count wrong modifiers
-v1_wrong_mod = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v1") & (audit_df["error_type"] == "wrong_modifier")])
-v2_wrong_mod = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "wrong_modifier")])
+# Compute Modifier Accuracy for selected model
+wrong_mod = len(filtered_audit_df[(filtered_audit_df["model_version"] == selected_model) & (filtered_audit_df["error_type"] == "wrong_modifier")])
+active_mod = 1.0 - (wrong_mod / total_records) if total_records > 0 else 1.0
 
-v1_mod_acc = 1.0 - (v1_wrong_mod / total_records)
-v2_mod_acc = 1.0 - (v2_wrong_mod / total_records)
+# Compute HCC Miss Rate for selected model
+hcc_miss = len(filtered_audit_df[(filtered_audit_df["model_version"] == selected_model) & (filtered_audit_df["error_type"] == "hcc_miss")])
+hcc_miss_rate = hcc_miss / total_records if total_records > 0 else 0.0
 
-# Compute HCC Miss Rate
-v2_hcc_miss = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "hcc_miss")])
-v2_hcc_miss_rate = v2_hcc_miss / total_records if total_records > 0 else 0.0
-
-# Compute Unit Mismatch Rate
-v2_unit_mismatch = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "unit_confusion")])
-v2_unit_mismatch_rate = v2_unit_mismatch / total_records if total_records > 0 else 0.0
+# Compute Unit Mismatch Rate for selected model
+unit_mismatch = len(filtered_audit_df[(filtered_audit_df["model_version"] == selected_model) & (filtered_audit_df["error_type"] == "unit_confusion")])
+unit_mismatch_rate = unit_mismatch / total_records if total_records > 0 else 0.0
 
 # Model Drift Score
 comparison_dict = regression.compare_versions()
-avg_delta = sum(m["delta"] for m in comparison_dict.values()) / len(comparison_dict) if comparison_dict else 0.0
+if selected_specialty != "All":
+    avg_delta = comparison_dict.get(selected_specialty, {}).get("delta", 0.0)
+else:
+    avg_delta = sum(m["delta"] for m in comparison_dict.values()) / len(comparison_dict) if comparison_dict else 0.0
 
 # Release Gate Status Check
-gate_failed = (avg_delta < -0.05) or (v2_wrong_mod > 0) or (v2_unit_mismatch > 0)
-
-# Set dynamic KPI metric colors
-active_em = v2_em_acc if selected_model == "clinical-nlp-v2" else v1_em_acc
-active_mod = v2_mod_acc if selected_model == "clinical-nlp-v2" else v1_mod_acc
+gate_failed = (avg_delta < -0.05) or (wrong_mod > 0) or (unit_mismatch > 0)
 
 # ---------------------------------------------------------
 # Top Compact KPI Row
