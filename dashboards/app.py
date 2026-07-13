@@ -410,9 +410,30 @@ with tab_regression:
     )
     st.plotly_chart(fig, use_container_width=True, key="drift_bar_chart")
     
-    st.markdown("### Specialty-Level Performance Matrix")
+    st.markdown("### Specialty-Level Performance & Revenue Matrix")
     comparison_df = pd.DataFrame.from_dict(comparison_dict, orient='index')
-    st.dataframe(comparison_df.style.highlight_min(subset=["delta"], color="#7F1D1D"))
+    # Format and style dataframe columns
+    formatted_df = comparison_df.copy()
+    formatted_df.columns = [
+        "Baseline F1", "Candidate F1", "F1 Delta", "Regression Counts",
+        "Baseline Leakage ($)", "Candidate Leakage ($)",
+        "Baseline Liability ($)", "Candidate Liability ($)",
+        "Baseline A/R Delay (Days)", "Candidate A/R Delay (Days)"
+    ]
+    st.dataframe(
+        formatted_df.style.format({
+            "Baseline F1": "{:.2f}",
+            "Candidate F1": "{:.2f}",
+            "F1 Delta": "{:+.2f}",
+            "Baseline Leakage ($)": "${:,.2f}",
+            "Candidate Leakage ($)": "${:,.2f}",
+            "Baseline Liability ($)": "${:,.2f}",
+            "Candidate Liability ($)": "${:,.2f}",
+            "Baseline A/R Delay (Days)": "{:.0f}",
+            "Candidate A/R Delay (Days)": "{:.0f}"
+        }).highlight_min(subset=["F1 Delta"], color="#7F1D1D"),
+        use_container_width=True
+    )
 
 # ---------------------------------------------------------
 # Tab 3: Specialty Drift
@@ -438,7 +459,29 @@ with tab_specialty:
             paper_bgcolor="rgba(0,0,0,0)",
             margin=dict(t=20, b=10, l=10, r=10)
         )
-        st.plotly_chart(fig_heat, use_container_width=True, key="specialty_heatmap")
+        
+        heat_col1, heat_col2 = st.columns([3, 2])
+        with heat_col1:
+            st.plotly_chart(fig_heat, use_container_width=True, key="specialty_heatmap")
+        with heat_col2:
+            # Aggregated error counts by type bar chart
+            err_summary = h_df_filtered.groupby("error_type")["error_count"].sum().reset_index()
+            fig_err_bar = px.bar(
+                err_summary, 
+                x="error_count", 
+                y="error_type", 
+                orientation="h",
+                title="Distribution of Error Types",
+                labels=dict(error_count="Error Count", error_type="Error Type"),
+                color_discrete_sequence=["#14B8A6"],
+                template="plotly_dark"
+            )
+            fig_err_bar.update_layout(
+                plot_bgcolor="rgba(0,0,0,0)",
+                paper_bgcolor="rgba(0,0,0,0)",
+                margin=dict(t=30, b=10, l=10, r=10)
+            )
+            st.plotly_chart(fig_err_bar, use_container_width=True, key="error_distribution_bar")
     else:
         st.info("No compliance error records found to map.")
 
@@ -681,6 +724,36 @@ with tab_gate:
                 st.rerun()
         else:
             st.success("Release Candidate (v2) has passed compliance checks. Staging approved.")
+
+# ---------------------------------------------------------
+# Layperson Understanding Box (The "Why & What" Context Box)
+# ---------------------------------------------------------
+st.markdown("---")
+st.markdown(
+    """
+    <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px; margin-bottom: 25px;">
+        <h3 style="color:#F1F5F9; margin-top:0; font-size:18px;">💡 Layperson's Guide: What is SynapseAudit & Why Does It Matter?</h3>
+        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+            <b>The Real-World Context (Doctor 🩺 → AI 🤖 → Insurance 💰):</b><br>
+            When you see a doctor, they write a detailed document called a <i>clinical note</i> describing your medical visit. Because clinical notes are unstructured text, healthcare systems use <b>Autonomous Medical Coding AI</b> (like Arintra's engine) to read these notes and automatically translate them into billing codes (ICD-10 for diagnoses, CPT for procedures, and billing modifiers). These codes are submitted to insurance companies for payment.
+        </p>
+        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+            <b>What Problem Does SynapseAudit Solve?</b><br>
+            AI models are constantly updated (new prompts, updated LLMs, fresh training data). Sometimes, an update makes the AI perform better overall, but causes a "silent regression" in specific specialties. For example:
+            <ul style="color:#94A3B8; font-size:14px; margin-left:15px; margin-top:5px;">
+                <li><b>Revenue Leakage ($):</b> If the AI misses a chronic condition diagnosis (like diabetes or stage 4 kidney disease), the hospital loses thousands of dollars in risk-adjustment payments.</li>
+                <li><b>Claim Rejections & Delays ($):</b> If the AI lists a procedure but forgets to add a mandatory billing modifier (like Modifier 25), the insurance company instantly rejects the claim. This forces manual rework and delays payments (increasing A/R Days).</li>
+                <li><b>Clinical Safety Errors:</b> Confusing dosage units (e.g. <code>mg</code> vs <code>mcg</code>) can lead to serious patient care issues.</li>
+            </ul>
+        </p>
+        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+            <b>How SynapseAudit Works (Basic to Advanced):</b><br>
+            Instead of releasing an AI update blindly to hospitals, SynapseAudit acts as an <b>offline staging release gate</b>. It runs the new AI candidate model (v2) alongside the stable production baseline (v1) on 30+ complex multi-specialty clinical notes. It checks for F1 score dropouts, rules compliance, and calculates the exact **Estimated Revenue Leakage ($)** and **Rejection Liabilities ($)** in real-time. If the candidate version leaks revenue or misses billing modifiers, the release gate is blocked, and we execute an automated rollback.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # ---------------------------------------------------------
 # Footer Section
