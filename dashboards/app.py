@@ -389,6 +389,27 @@ with tab_overview:
                 unsafe_allow_html=True
             )
 
+    # Dynamic Layperson box for Executive Overview tab
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Executive Overview</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Active Settings & Target Scope:</b> You have currently selected evaluation model <b>{selected_model}</b> under department/specialty filter <b>{selected_specialty}</b>. 
+                This covers a total of <b>{total_records}</b> clinical charts. The release status is <b>{"BLOCKED (FAIL)" if gate_failed else "APPROVED (PASS)"}</b>.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> {"This is <b>BAD</b>. The candidate model version has critical coding compliance errors (like missed HCC modifiers or dosage unit mismatches) that will trigger immediate claim denials or audits if deployed." if gate_failed else "This is <b>GOOD</b>. The active model satisfies all staging safety parameters."}
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> {"Go to the <b>Regression Analysis</b> and <b>Specialty Drift</b> tabs to identify which specialties are failing, then revert or repair the model." if gate_failed else "You can proceed to promote the candidate model to production staging."}
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ---------------------------------------------------------
 # Tab 2: Regression Analysis
 # ---------------------------------------------------------
@@ -437,6 +458,27 @@ with tab_regression:
             "Candidate A/R Delay (Days)": "{:.0f}"
         }).highlight_min(subset=["F1 Delta"], color="#7F1D1D"),
         use_container_width=True
+    )
+
+    # Dynamic Layperson box for Regression tab
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Regression Analysis</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>What you are looking at:</b> This tab compares the coding accuracy (F1 score) and the financial impact between the old baseline (v1) and candidate (v2) models. 
+                The <b>F1 Delta</b> column shows the performance shift. A negative delta (highlighted in red) means the new model has regressed and is performing worse than the old one.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> Check the **F1 Delta**, **Leakage ($)** and **Liability ($)** deltas. If you see high red highlights or increased leakage for the candidate, this is **BAD** because it represents silent revenue loss.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> Identify the specialties with high negative F1 deltas (such as Cardiology or Gynecology). Do <b>NOT</b> approve a release that degrades F1 coding accuracy. Work on prompt adjustments for these specific specialties.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
     )
 
 # ---------------------------------------------------------
@@ -488,6 +530,27 @@ with tab_specialty:
             st.plotly_chart(fig_err_bar, use_container_width=True, key="error_distribution_bar")
     else:
         st.info("No compliance error records found to map.")
+
+    # Dynamic Layperson box for Specialty Drift tab
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Specialty Risk Heatmap</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>What you are looking at:</b> This heatmap plots the type of coding errors across different medical specialties for the selected model <b>{selected_model}</b>. 
+                The side bar chart shows the total distribution of error types (such as wrong modifiers or NCCI bundling conflicts).
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> Large dark teal blocks or high counts of **wrong_modifier** are **BAD** because they mean the AI is failing to apply modifiers, which leads to immediate insurance claim rejections. High counts of **hcc_miss** represent direct under-billing.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> Use the filters to toggle models and see how the error distribution shifts. Focus engineering effort on resolving the most frequent error category highlighted in the distribution bar chart.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------------------------------------------------
 # Tab 4: Explainable Audit Ledger
@@ -573,6 +636,27 @@ with tab_ledger:
                 st.dataframe(violations[["error_type", "risk_score", "details"]], hide_index=True)
             else:
                 st.success("Case passes all compliance rules.")
+
+    # Dynamic Layperson box for Ledger tab
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Explainable Audit Ledger</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>What you are looking at:</b> This is the patient-level audit room. You can select any individual record (like <b>{selected_id or "REC001"}</b>) to view its full note text. 
+                The green highlighted words show where the AI extracted the codes. The right panel displays the side-by-side code predictions of both models vs the gold standard.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> If the candidate version predictions differ from the gold-standard codes, it is **BAD**. It means the model made a concrete coding mistake on this chart, resulting in either lost revenue (under-coding) or audit risk (over-coding).
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> Review the highlighted evidence. Use the <b>Adjudication Control Panel</b> to Approve or Reject/Flag the case for compliance reviews.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------------------------------------------------
 # Tab 5: SQL Insights
@@ -678,6 +762,26 @@ GROUP BY p.model_version, p.prompt_version;"""
         conn.close()
         st.dataframe(res_df)
 
+    # Dynamic Layperson box for SQL Insights tab
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: SQL Insights</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>What you are looking at:</b> This is a direct query portal for database analytics. You can select pre-written queries to calculate error rates, HCC misses, or the Claim Deniability Risk Index (CDRI) directly using SQL.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> Running these queries gives you the underlying statistics that power the graphs. High error rates or rising CDRIs are **BAD** and should trigger prompt tuning updates.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> Click the **Run Analytics Query** button to pull the raw tables. You can use these tables to build custom spreadsheets for executive reporting.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 # ---------------------------------------------------------
 # Tab 6: Release Gate
 # ---------------------------------------------------------
@@ -729,32 +833,25 @@ with tab_gate:
         else:
             st.success("Release Candidate (v2) has passed compliance checks. Staging approved.")
 
-# ---------------------------------------------------------
-# Layperson Understanding Box (The "Why & What" Context Box)
-# ---------------------------------------------------------
-st.markdown("---")
-st.markdown(
-    """
-    <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px; margin-bottom: 25px;">
-        <h3 style="color:#F1F5F9; margin-top:0; font-size:18px;">💡 Layperson's Guide: Understanding Dashboard Settings & Metrics</h3>
-        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-            <b>Active Sidebar Settings & Filters:</b><br>
-            *   <b>Select Evaluation Model</b>: Lets you toggle between the stable baseline model (<code>clinical-nlp-v1</code>) currently used in production and the new candidate model (<code>clinical-nlp-v2</code>) being tested.
-            *   <b>Filter by Specialty</b>: Focuses the entire dashboard on a single clinical department (e.g., Cardiology, Endocrinology) to verify performance.
-        </p>
-        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-            <b>Understanding the Top KPI Metrics:</b><br>
-            *   <b>Exact Match Acc</b>: The percentage of patient visits where the AI's billing codes were 100% identical to human coding results.
-            *   <b>Modifier Accuracy</b>: The AI's success rate in applying mandatory billing flags (like Modifier 25) when both a visit and a procedure happen on the same day.
-            *   <b>Revenue Leakage ($)</b>: Estimated annual money lost by the hospital because the AI forgot to document valid chronic disease codes (missed HCC codes).
-            *   <b>Rejection Liability ($)</b>: The financial penalty and claim rework costs expected due to violating insurance rules (e.g., NCCI procedure bundle conflicts or wrong modifiers).
-            *   <b>A/R Delay Risk (Days)</b>: The number of days hospital payments will be frozen in "Accounts Receivable" because the insurance company rejected the claim.
-            *   <b>Release Gate Status</b>: Displays <code>Passed</code> if the AI model meets all compliance standards, or <code>Blocked</code> if errors exceed safety thresholds.
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    # Dynamic Layperson box for Release Gate tab
+    st.markdown("---")
+    st.markdown(
+        f"""
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Staging Release Gate</h3>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>What you are looking at:</b> This is the final quality check matrix. The table lists the release rules (e.g. F1 drift, modifier accuracy drop). If any rule fails, the candidate release is blocked.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
+                <b>Is this Good or Bad?</b> If the candidate is **Blocked**, it is **BAD** for deployment speed but **GOOD** for safety. It means we have caught coding regressions before they could cause real claim rejections.
+            </p>
+            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
+                <b>What you should do:</b> If the gate is blocked, click the <b>Execute Hot Rollback to Stable Baseline</b> button to revert the staging environment to the stable baseline model (v1) instantly.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # ---------------------------------------------------------
 # Footer Section
