@@ -275,7 +275,7 @@ with kpi_col3:
     st.markdown(
         f'<div class="metric-card">'
         f'<div class="metric-label">HCC Miss Rate</div>'
-        f'<div class="metric-val-amber">{v2_hcc_miss_rate:.1%}</div>'
+        f'<div class="metric-val-amber">{hcc_miss_rate:.1%}</div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -283,7 +283,7 @@ with kpi_col4:
     st.markdown(
         f'<div class="metric-card">'
         f'<div class="metric-label">Unit Mismatch</div>'
-        f'<div class="metric-val-rose">{v2_unit_mismatch_rate:.1%}</div>'
+        f'<div class="metric-val-rose">{unit_mismatch_rate:.1%}</div>'
         f'</div>',
         unsafe_allow_html=True
     )
@@ -629,12 +629,25 @@ with tab_gate:
         "Failure of any rule automatically blocks staging deployment."
     )
     
+    # Calculate global candidate v2 metrics for the rules matrix
+    global_total = len(encounters)
+    global_v2_wrong_mod = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "wrong_modifier")])
+    global_v2_mod_acc = 1.0 - (global_v2_wrong_mod / global_total) if global_total > 0 else 1.0
+    
+    global_v2_hcc_miss = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "hcc_miss")])
+    global_v2_hcc_miss_rate = global_v2_hcc_miss / global_total if global_total > 0 else 0.0
+    
+    global_v2_unit_mismatch = len(audit_df[(audit_df["model_version"] == "clinical-nlp-v2") & (audit_df["error_type"] == "unit_confusion")])
+    global_v2_unit_mismatch_rate = global_v2_unit_mismatch / global_total if global_total > 0 else 0.0
+    
+    global_avg_delta = sum(m["delta"] for m in comparison_dict.values()) / len(comparison_dict) if comparison_dict else 0.0
+
     # Table displaying active rules & status
     rules_data = [
-        {"Rule Name": "Modifier Accuracy Drop", "Threshold": ">= Baseline (v1)", "Active Candidate Value": f"{v2_mod_acc:.1%}", "Status": "FAIL" if v2_wrong_mod > 0 else "PASS"},
-        {"Rule Name": "HCC Capture Miss", "Threshold": "No increase vs v1", "Active Candidate Value": f"{v2_hcc_miss_rate:.1%}", "Status": "FAIL" if v2_hcc_miss > 0 else "PASS"},
-        {"Rule Name": "Unit Mismatch Error", "Threshold": "0.0% Tolerance", "Active Candidate Value": f"{v2_unit_mismatch_rate:.1%}", "Status": "FAIL" if v2_unit_mismatch > 0 else "PASS"},
-        {"Rule Name": "F1 Drift Specialty Tolerance", "Threshold": ">= -2.0% Delta", "Active Candidate Value": f"{avg_delta:+.3f}", "Status": "FAIL" if avg_delta < -0.02 else "PASS"},
+        {"Rule Name": "Modifier Accuracy Drop", "Threshold": ">= Baseline (v1)", "Active Candidate Value": f"{global_v2_mod_acc:.1%}", "Status": "FAIL" if global_v2_wrong_mod > 0 else "PASS"},
+        {"Rule Name": "HCC Capture Miss", "Threshold": "No increase vs v1", "Active Candidate Value": f"{global_v2_hcc_miss_rate:.1%}", "Status": "FAIL" if global_v2_hcc_miss > 0 else "PASS"},
+        {"Rule Name": "Unit Mismatch Error", "Threshold": "0.0% Tolerance", "Active Candidate Value": f"{global_v2_unit_mismatch_rate:.1%}", "Status": "FAIL" if global_v2_unit_mismatch > 0 else "PASS"},
+        {"Rule Name": "F1 Drift Specialty Tolerance", "Threshold": ">= -2.0% Delta", "Active Candidate Value": f"{global_avg_delta:+.3f}", "Status": "FAIL" if global_avg_delta < -0.02 else "PASS"},
     ]
     st.table(rules_data)
     
