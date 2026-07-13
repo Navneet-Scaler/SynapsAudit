@@ -251,7 +251,17 @@ if code_search.strip():
         filtered_encounters["record_id"].isin(matching_pred_records)
     ]
 
-# Filter predictions and audits
+# Apply compliance error type filter to encounters
+if selected_error != "All":
+    error_record_ids = set(audit_df[audit_df["error_type"] == selected_error]["record_id"])
+    filtered_encounters = filtered_encounters[filtered_encounters["record_id"].isin(error_record_ids)]
+
+# Apply risk score filter to encounters
+if selected_risk > 0.0:
+    risk_record_ids = set(audit_df[audit_df["risk_score"] >= selected_risk]["record_id"])
+    filtered_encounters = filtered_encounters[filtered_encounters["record_id"].isin(risk_record_ids)]
+
+# Filter predictions and audits based on remaining encounters
 filtered_record_ids = set(filtered_encounters["record_id"])
 filtered_predictions = predictions[predictions["record_id"].isin(filtered_record_ids)]
 filtered_predictions = filtered_predictions[filtered_predictions["avg_conf"] >= selected_conf]
@@ -622,10 +632,12 @@ with tab_ledger:
     # Search and Filter criteria inside the tab
     col_led_filt1, col_led_filt2 = st.columns([1, 2])
     
-    # Filter encounters based on specialty selected in sidebar
-    filt_encounters = encounters
-    if selected_specialty != "All":
-        filt_encounters = filt_encounters[filt_encounters["specialty"] == selected_specialty]
+    # Filter encounters based on all active sidebar filters
+    filt_encounters = filtered_encounters
+    # Auto-adjust selected record session state if it's no longer in the filtered record list
+    record_list = filt_encounters["record_id"].tolist()
+    if record_list and st.session_state.get("selected_record") not in record_list:
+        st.session_state["selected_record"] = record_list[0]
         
     with col_led_filt1:
         record_list = filt_encounters["record_id"].tolist()
