@@ -1,24 +1,27 @@
-# Validation Metrics Reference
+# Clinical QA Validation Metrics Reference
 
-SynapseAudit evaluates clinical coding using several key metrics:
+This document defines the core performance and compliance metrics tracked by the SynapseAudit regression engine.
 
-## 1. Classification Metrics
-- **Precision**: How many predicted codes were correct.
-- **Recall**: How many actual codes the model found.
-- **F1 Score**: Harmonic mean of Precision and Recall.
-- **Exact Match (EM)**: Percent of encounters where the predicted set of codes perfectly matches the ground truth set.
+## Metric Glossary
 
-## 2. Agreement Statistics
-- **Cohen’s Kappa ($\kappa$)**:
-  $$\kappa = \frac{p_o - p_e}{1 - p_e}$$
-  Used to determine if the model is operating at a level of agreement with gold-standard human coders that exceeds chance.
-  - $\kappa > 0.8$: Excellent agreement
-  - $0.6 < \kappa \le 0.8$: Substantial agreement
-  - $\kappa \le 0.6$: Unacceptable for clinical billing.
+- **Exact-Match Accuracy**: The percentage of clinical encounters where the model's predicted codes perfectly match the gold-standard codes.
+- **Modifier Accuracy**: The percentage of eligible encounters where Modifier 25 is correctly attached to E/M codes when a separate procedure is performed.
+- **Unit Accuracy**: The percentage of medication dosage matches where the predicted code matches the correct unit (e.g., `mcg` vs. `mg`).
+- **HCC Capture Rate**: The percentage of gold-standard Hierarchical Condition Categories (HCCs) correctly captured by the model.
+- **Regression Delta**: The net performance difference (F1, Kappa, or accuracy) between the baseline model and the candidate model.
+- **Cohen’s Kappa ($\kappa$)**: Statistical measure of agreement between the model's predictions and human coders, adjusted for chance agreement.
+- **Claim Deniability Risk Index (CDRI)**: A composite compliance score indicating the density of NCCI conflicts, wrong modifiers, and overcoded E/M levels.
 
-## 3. Financial & Compliance Indicators
-- **Claim Deniability Risk Index (CDRI)**:
-  $$\text{CDRI} = \frac{\text{NCCI Violations} \times 1.5 + \text{Wrong Modifier} \times 1.5 + \text{Overcoded E/M Level}}{\text{Total Encounters}}$$
-- **HCC Capture Rate**:
-  $$\text{HCC Capture Rate} = \frac{\text{True Positive HCC Codes Extracted}}{\text{Gold Standard HCC Codes}}$$
-- **Unit Mismatch Error Rate**: Percentage of matches where dosage units specified in notes do not match the predicted code context.
+---
+
+## Formulations
+
+### Cohen's Kappa ($\kappa$)
+$$\kappa = \frac{p_o - p_e}{1 - p_e}$$
+Where:
+- $p_o$ is the relative observed agreement between the model's predicted code set and the gold-standard labels.
+- $p_e$ is the hypothetical probability of random agreement.
+
+### Claim Deniability Risk Index (CDRI)
+$$\text{CDRI} = \frac{\text{NCCI Violations} \times 1.5 + \text{Wrong Modifier} \times 1.5 + \text{Overcoded E/M Level}}{\text{Total Encounters}}$$
+A high CDRI indicates that model predictions introduce significant financial audit risks.

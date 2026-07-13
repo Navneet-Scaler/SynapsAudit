@@ -1,91 +1,107 @@
 # SynapseAudit
 
-**SynapseAudit** is a production-grade, offline, deterministic regression and compliance engine designed for Clinical NLP coding quality assurance. It helps clinical coding QA teams and ML engineers stress-test and audit model outputs (ICD-10, CPT, modifiers, and HCC risk adjustments) against a human-adjudicated gold-standard dataset before releasing new prompts or updated model checkpoints.
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/Navneet-Scaler/SynapsAudit)
+[![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-green?logo=streamlit)](https://navneet-scaler-synapsaudit-dashboardsapp-k5q7lf.streamlit.app/)
 
-## Key Features
+### The Problem
+Changes in base clinical NLP models or LLM prompt variations introduce silent code and prompt drift, leading to under-billing (missed HCC codes) or severe compliance risks (omitted billing modifiers and overcoded E/M levels).
 
-- **Clinical Section & Entity Parser**: Token-span parsing mapped to ground truth ICD-10 and CPT codes.
-- **Deterministic Rules Engine**: Automated compliance checks for:
-  - **Modifier 25 Eligibility**: Catching missing modifier 25 when billing a procedure and E/M on the same day.
-  - **HCC Capture Gap**: Flagging missed Hierarchical Condition Categories (e.g., Type 2 Diabetes).
-  - **Duplicate Billing Detection**: Identifying duplicated procedure codes.
-  - **Unit Mismatch**: Catching dosage unit confusion (e.g., matching `mg` instead of `mcg` for levothyroxine).
-- **PostgreSQL Compliance Analytics**: Pre-packaged queries evaluating drift and error rates by specialty.
-- **Explainable Audit Ledger**: A Streamlit dashboard utilizing interactive, HTML-based note highlighting to trace code matches to source notes.
-- **Release Gates**: An automated CLI release checker that exits with a failure code when accuracy or modifier checks drop below baseline.
+### The Solution
+**SynapseAudit** is an offline clinical NLP regression and compliance engine designed for deterministic validation of model-predicted ICD-10 and CPT codes, modifier logic, and HCC capture against a human-adjudicated gold-standard dataset.
+
+### The Target Audience
+This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinical Compliance Officers** to audit model revisions and enforce safety gates before deploying NLP pipelines.
 
 ---
 
-## Tech Stack & Setup
+## Key Metrics
 
-### Prerequisites
-- Python 3.9+
-- SQLite (pre-installed; runs standard PostgreSQL-compatible queries)
-
-### Installation
-1. Clone the repository and initialize the virtual environment:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-2. Install requirements:
-   ```bash
-   pip install pandas numpy plotly streamlit pytest
-   ```
-
-3. Populate the mock database with baseline (`v1`) and candidate (`v2`) clinical records:
-   ```bash
-   python3 data/mock_generator.py
-   ```
+| Metric | Definition |
+| :--- | :--- |
+| **Exact-Match Accuracy** | The percentage of clinical encounters where the model's predicted codes perfectly match the gold-standard codes. |
+| **Modifier Accuracy** | The percentage of eligible encounters where Modifier 25 is correctly attached to E/M codes when a separate procedure is performed. |
+| **Unit Accuracy** | The percentage of medication dosage matches where the predicted code matches the correct unit (e.g., `mcg` vs. `mg`). |
+| **HCC Capture Rate** | The percentage of gold-standard Hierarchical Condition Categories (HCCs) correctly captured by the model. |
+| **Regression Delta** | The net performance difference (F1, Kappa, or accuracy) between the baseline model and the candidate model. |
+| **Cohen’s Kappa ($\kappa$)** | Statistical measure of agreement between the model's predictions and human coders, adjusted for chance agreement. |
+| **Claim Deniability Risk Index (CDRI)** | A composite compliance score indicating the density of NCCI conflicts, wrong modifiers, and overcoded E/M levels. |
 
 ---
 
-## Running the Application
-
-### 1. Run Automated Unit Tests
-To run compliance rule checks and metric validations:
-```bash
-PYTHONPATH=. python3 -m pytest tests/
-```
-
-### 2. Run the Release Gate Check
-Simulate a CI/CD build run to verify if the candidate release candidate (`v2`) meets safety standards:
-```bash
-PYTHONPATH=. python3 src/release_gate.py
-```
-*(This will exit with code `1` and block the pipeline because `v2` contains regression errors)*
-
-### 3. Launch the Interactive Dashboard
-Launch the Streamlit app to explore the Explainable Audit Ledger and Specialty analytics:
-```bash
-streamlit run dashboards/app.py
-```
+## Data Provenance & Safety
+To ensure compliance and realistic benchmarking, the engine runs on a validation dataset composed of:
+1. **Deidentified Clinical Notes**: Semi-structured clinical profiles inspired by the MIMIC-IV-Note database (discharge summaries and radiology reports).
+2. **Specialty Transcripts**: Outpatient encounter notes representing clinical text patterns from MTSamples (e.g., Cardiology, Orthopedics).
+3. **Synthetic Edge Cases**: Simulated safety-critical scenarios containing billing challenges such as Modifier 25 eligibility, NCCI mutually exclusive procedures, and levothyroxine dosage unit checks.
+4. **Gold-Standard Labeled Truth**: A simulated consensus coder dataset acting as the ground-truth baseline.
 
 ---
 
-## Project Structure
+## Operational Release Gate Logic
+The automated release gate (`src/release_gate.py`) evaluates candidates before staging deployment. A candidate version will fail deployment if:
+- **Modifier Accuracy Drops**: Any decrease in Modifier 25 accuracy compared to the baseline (`v1`).
+- **HCC Misses Increase**: Any rise in missed Hierarchical Condition Categories.
+- **Unit Confusion Rises**: Any instance of dosage unit confusion (`mg` vs. `mcg`).
+- **Specialty Drift Exceeds Tolerance**: Specialty-level F1-score drop greater than $2\%$.
 
+---
+
+## Version Comparison
+SynapseAudit tracks side-by-side performance of model configurations:
+- **Baseline Version (v1)**: Matches the standard production configuration (e.g., stable system prompt).
+- **Candidate Version (v2)**: Represents the updated candidate (e.g., modified system prompt or updated base model).
+- **Drift by Specialty**: Captures where specific medical specialties (e.g., Cardiology, Orthopedics) degrade under prompt modifications.
+
+---
+
+## Explainable Audit Ledger
+The audit workflow is designed to allow clinical review teams to trace decisions:
+- **Clinical Note Segment**: The raw clinical text.
+- **Evidence-Span Highlighting**: Visual highlights indicating exactly where the model matched a code.
+- **Predicted vs. Gold Codes**: Comparison of extracted codes side-by-side.
+- **Mismatch Reason**: Detailed error categories (e.g., `hcc_miss`, `wrong_modifier`, `unit_confusion`).
+- **Reviewer Decision**: Interactive buttons to record Auditor agreement (`Agree` / `Disagree`).
+
+---
+
+## Project Impact
+- **200+** Simulated and deidentified clinical notes audited.
+- **7** Core compliance and accuracy metrics evaluated per model version.
+- **4** Major automated billing rule engines (Modifier 25, NCCI, Unit Mismatch, HCC Gap).
+- **1** Unified CLI release gate to prevent regression deployments.
+
+---
+
+## Quick Start Setup
+
+### 1. Installation & Environment Setup
+Clone the repository and install requirements:
+```bash
+git clone https://github.com/Navneet-Scaler/SynapsAudit.git
+cd SynapsAudit
+pip install -r requirements.txt
 ```
-├── README.md
-├── PRD.md
-├── Strategic_Pivot_Report.md
-├── analytical_queries.sql
-├── data/
-│   ├── mock_generator.py      # Generates synthetic clinical notes database
-│   └── synapse_audit.db       # Local database
-├── schema/
-│   └── database_setup.sql     # PostgreSQL DDL setup schema
-├── src/
-│   ├── dataset_loader.py      # Dataset pipeline
-│   ├── parser.py              # Clinical NLP parser (text highlighter spans)
-│   ├── rules.py               # Deterministic compliance rules
-│   ├── metrics.py             # F1, Cohen's Kappa, CDRI
-│   ├── regression.py          # Version delta engine
-│   ├── database.py            # SQLite analytics interface
-│   └── release_gate.py        # CLI release validator
-├── dashboards/
-│   └── app.py                 # Streamlit UI
-└── tests/
-    ├── test_rules.py          # Rules unit tests
-    └── test_regression.py     # Metrics unit tests
+
+### 2. Database Initialization
+Build the SQLite analytics database containing baseline and candidate records:
+```bash
+python3 data/mock_generator.py
+```
+
+### 3. Run Automated Tests
+Verify compliance rules, metrics, and gate checks:
+```bash
+python3 -m pytest
+```
+
+### 4. Run Release Gate Check
+Run the CLI gate to verify if candidate `v2` matches compliance rules:
+```bash
+python3 src/release_gate.py
+```
+
+### 5. Launch the Dashboard
+Run the Streamlit dashboard:
+```bash
+python3 -m streamlit run dashboards/app.py
 ```

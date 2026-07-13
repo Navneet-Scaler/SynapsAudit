@@ -1,14 +1,19 @@
-# Versioning & Snapshot Tracking
+# Model and Prompt Version Control
 
-SynapseAudit supports side-by-side comparison of different model configurations.
+This document describes how SynapseAudit tracks version configurations and detects performance drift.
 
-## Schema Entities
-Every predicted code runs inside a context consisting of:
-- `model_version`: e.g., `gpt-4o-2024-05-13`, `llama-3-70b-instruct`.
-- `prompt_version`: e.g., `v1.2_sys_instructions`, `v2.0_few_shot_modifier`.
+## 1. Version Configurations
+The engine tracks performance parameters side-by-side across two distinct axes:
+- **Model Version**: The base LLM or encoder version (e.g., `clinical-nlp-v1` vs. `clinical-nlp-v2`).
+- **Prompt Version**: The instructions, system prompts, or few-shot exemplars (e.g., `sys_v1.0_baseline` vs. `sys_v1.1_modifier_boost`).
 
-## Drift Analysis
-By tracking predictions across versions, the engine calculates:
-- **Specialty Drift**: The percentage difference in error rates for a specific specialty between `v1` and `v2`.
-- **Code Frequency Drift**: Detects if a new prompt version causes the system to over-predict specific codes (e.g., billing 99214 instead of 99213).
-- **Regression Flags**: Automatically flags if a code that was correctly predicted in `v1` is missed in `v2`.
+## 2. Version Comparison Matrices
+By comparing baseline predictions with the candidate version, the system evaluates:
+- **Specialty-Level F1 & Kappa Drift**: Tracking whether prompt optimizations for one specialty (e.g., Oncology) cause regressions in another (e.g., Cardiology).
+- **Code Family Drift**: Monitoring frequency shifts in common billing code families (e.g., CPT E/M codes `99213` and `99214`) to identify artificial upcoding trends.
+
+## 3. Why Version Comparison Matters
+Without offline version comparison, prompt tuning or model updates introduce silent regressions:
+- A change to improve cardiology extraction might cause a loss of modifier rule triggers in general outpatient notes.
+- Slight phrasing changes can cause the model to mismatch dosage units, presenting a severe risk to downstream clinical safety checks.
+- Comparison matrices identify exactly *did* it get worse, *where* did it get worse, and *why* it got worse, allowing clinical analysts to audit the candidate.

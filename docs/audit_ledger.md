@@ -1,13 +1,26 @@
-# Explainable Audit Ledger
+# Explainable Audit Ledger Workflow
 
-The Explainable Audit Ledger provides human auditors with clinical evidence justifications for model predictions.
+The Explainable Audit Ledger is the primary interface for clinical reviewers to inspect, verify, and resolve NLP coding discrepancies.
 
-## Evidence Span Highlighting
-When an NLP model extracts a code, it must output the exact text span that triggered the code. The ledger maps these spans back to the original clinical note:
-- **Highlighted Spans**: The characters in `note_text` starting at `start_char` and ending at `end_char`.
-- **Mismatch Explanation**: If the model predicts a code but the gold standard differs, the ledger presents the mismatch classification (e.g., `missing_icd10`, `wrong_modifier`, `unit_confusion`).
+## Reviewer Traceability Schema
 
-## Reviewer Actions
-Auditors can inspect records in the UI and toggle:
-- **Agree/Disagree**: Flags if the auditor agrees with the candidate's prediction.
-- **Rejection Reason**: Captures human-in-the-loop qualitative feedback on prompt regressions.
+For every audited encounter, the ledger displays the following critical fields:
+
+1. **Note Text**: The raw clinical note segment (discharge summary or specialty consult transcript).
+2. **Highlighted Span**: The precise word/character index span from the note that triggered the model's extraction (providing evidence-based justification).
+3. **Predicted Code**: The ICD-10 or CPT code extracted by the candidate model.
+4. **Gold Code**: The human-adjudicated ground-truth code assigned by coding experts.
+5. **Mismatch Reason**: The classified error type (e.g., `wrong_modifier`, `hcc_miss`, `unit_confusion`, `ncci_conflict`).
+6. **Reviewer Decision**: Interactive buttons where the auditor records whether they `Agree` or `Disagree` with the model's prediction.
+
+## Review Action Lifecycle
+
+```mermaid
+graph LR
+    A[Model Discrepancy Flagged] --> B[Auditor Reviews Evidence Span]
+    B --> C{Agree with Prediction?}
+    C -- Yes --> D[Flag Model Correction / Update Gold standard]
+    C -- No --> E[Mark Disagree / Flag Prompt Regression]
+```
+
+This traceability ensures that all model changes are verified with clear clinical context rather than generic black-box accuracy numbers.

@@ -1,17 +1,20 @@
-# Release Gate Policy
+# Operational Release Gate Policy
 
-Before a new clinical NLP model version or prompt variant is approved for staging or production, it must pass the SynapseAudit release gate.
+To prevent prompt or model changes from causing silent performance regressions in production, all updates must pass the automated release gate (`src/release_gate.py`).
 
-## Gate Criteria & Thresholds
+## Gate Evaluation Rules
 
-| Metric | Threshold Rule | Action on Failure |
-| :--- | :--- | :--- |
-| **Exact Match Accuracy** | Must be $\ge$ baseline model (v1) | Block deployment |
-| **Modifier Accuracy** | Must not drop by $> 1\%$ | Block deployment |
-| **HCC Miss Rate** | Must not increase by $> 0.5\%$ | Block deployment |
-| **Unit Confusion Rate** | Must be $0\%$ | Block deployment / Immediate Rollback |
-| **Claim Deniability Risk Index** | Must be $\le 0.10$ | Block deployment |
-| **Cohen's Kappa ($\kappa$)** | Must be $\ge 0.70$ | Warning / Audit Required |
+A candidate version (e.g., `v2` prompt configuration or updated LLM weights) is automatically blocked from release if any of the following rules are violated:
 
-## Automated Gate Check
-The CLI run gate (`src/release_gate.py`) evaluates these rules programmatically. If any blocking criteria fails, the command exits with code `1`, causing CI/CD build failure.
+1. **Modifier Accuracy Regression Rule**: The candidate's Modifier 25 accuracy must be greater than or equal to the baseline model (`v1`) accuracy.
+2. **HCC Capture Rate Rule**: The candidate's Hierarchical Condition Category (HCC) capture rate must not drop compared to the baseline (`v1`).
+3. **Unit Confusion Tolerance Rule**: The dosage unit mismatch rate must be exactly $0\%$. Any instance of unit confusion (e.g., matching `mg` instead of `mcg` or vice versa) results in an immediate failure.
+4. **Specialty F1 Drift Rule**: The candidate's F1-score for any individual specialty cohort (e.g., Cardiology, Orthopedics) must not degrade by more than $2\%$ compared to the baseline.
+5. **Deniability Risk threshold Rule**: The Claim Deniability Risk Index (CDRI) of the candidate model must be less than or equal to $0.10$.
+
+## Execution in CI/CD Pipelines
+The release validator CLI checks these rules programmatically:
+```bash
+python3 src/release_gate.py
+```
+If any of the blocking rules fail, the script exits with code `1`, halting the CI/CD deployment pipeline.
