@@ -429,18 +429,43 @@ with tab_overview:
     st.markdown("---")
     st.markdown(
         f"""
-        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px;">
-            <h3 style="color:#F1F5F9; margin-top:0; font-size:16px;">💡 Auditor's Console Guide: Executive Overview</h3>
-            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-                <b>Active Settings & Target Scope:</b> You have currently selected evaluation model <b>{selected_model}</b> under department/specialty filter <b>{selected_specialty}</b>. 
-                This covers a total of <b>{total_records}</b> clinical charts. The release status is <b>{"BLOCKED (FAIL)" if gate_failed else "APPROVED (PASS)"}</b>.
+        <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 22px; margin-top: 25px; margin-bottom: 25px;">
+            <h3 style="color:#F1F5F9; margin-top:0; font-size:18px;">💡 Hey viewer! Here is your Live Audit & Filter Guide</h3>
+            <p style="font-size:14px; color:#E2E8F0; line-height:1.6; margin-bottom:12px;">
+                Welcome to the console. You are actively controlling how clinical billing charts are audited using the sidebar parameters. Let's break down the live dashboard state:
             </p>
-            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-                <b>Is this Good or Bad?</b> {"This is <b>BAD</b>. The candidate model version has critical coding compliance errors (like missed HCC modifiers or dosage unit mismatches) that will trigger immediate claim denials or audits if deployed." if gate_failed else "This is <b>GOOD</b>. The active model satisfies all staging safety parameters."}
-            </p>
-            <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
-                <b>What you should do:</b> {"Go to the <b>Regression Analysis</b> and <b>Specialty Drift</b> tabs to identify which specialties are failing, then revert or repair the model." if gate_failed else "You can proceed to promote the candidate model to production staging."}
-            </p>
+            <div style="background-color:#0F172A; border-radius:4px; padding:12px; margin-bottom:15px; border:1px solid #334155;">
+                <h4 style="color:#38BDF8; font-size:14px; margin-top:0; margin-bottom:8px;">🛠️ Active Sidebar Filter Controls</h4>
+                <ul style="color:#94A3B8; font-size:13px; margin-left:15px; margin-bottom:0; line-height:1.5;">
+                    <li><b>Model Under Evaluation</b>: You are examining <code>{selected_model}</code>. (v1 is the stable production reference; v2 is the staging update).</li>
+                    <li><b>Filter Specialty</b>: Slicing by department: <code>{selected_specialty}</code>.</li>
+                    <li><b>Filter Compliance Error</b>: Slicing by error category: <code>{selected_error}</code>.</li>
+                    <li><b>Filter Note Section</b>: Slicing by clinical layout: <code>{selected_section}</code>.</li>
+                    <li><b>Min Model Confidence</b>: Filtering out AI codes with confidence below <code>{selected_conf:.2f}</code>.</li>
+                    <li><b>Min Risk Score Filter</b>: Filtering out audit results with a risk severity below <code>{selected_risk:.1f}</code>.</li>
+                    <li><b>Search Billing Code</b>: Restricting views to encounters matching: <code>"{code_search or "N/A"}"</code>.</li>
+                </ul>
+            </div>
+            <div style="background-color:#0F172A; border-radius:4px; padding:12px; margin-bottom:15px; border:1px solid #334155;">
+                <h4 style="color:#34D399; font-size:14px; margin-top:0; margin-bottom:8px;">📊 What to Infer from the Current KPI Scores</h4>
+                <ul style="color:#94A3B8; font-size:13px; margin-left:15px; margin-bottom:0; line-height:1.5;">
+                    <li><b>Exact Match Acc ({active_em:.1%})</b>: This shows how often the AI gets every single billing code exactly correct. **Higher is better.**</li>
+                    <li><b>Modifier Accuracy ({active_mod:.1%})</b>: The AI's success in applying procedure modifiers (like Modifier 25). **Low scores mean immediate claim rejections.**</li>
+                    <li><b>Revenue Leakage (${active_leakage:,.2f})</b>: 🔴 <b>BAD if above $0!</b> The estimated cash the hospital is losing because the AI forgot to document valid diagnosis codes (missed HCCs).</li>
+                    <li><b>Rejection Liability (${active_liability:,.2f})</b>: 🔴 <b>BAD if above $0!</b> Financial rework penalties and billing rejections triggered by NCCI coding conflicts or wrong modifiers.</li>
+                    <li><b>A/R Delay Risk ({active_ar_delay} Days)</b>: The average time hospital payments will be frozen in Accounts Receivable waiting for administrative reviews.</li>
+                    <li><b>Release Gate Status ({"BLOCKED" if gate_failed else "PASSED"})</b>: If **BLOCKED**, the candidate model v2 has failed safety limits and cannot go live.</li>
+                </ul>
+            </div>
+            <div style="background-color:#0F172A; border-radius:4px; padding:12px; border:1px solid #334155;">
+                <h4 style="color:#F472B6; font-size:14px; margin-top:0; margin-bottom:8px;">🚀 Next Steps & Who to Reach Out To</h4>
+                <p style="font-size:13px; color:#94A3B8; line-height:1.5; margin-bottom:0;">
+                    <b>If the Release Gate is Blocked:</b><br>
+                    1. Revert to the stable <code>clinical-nlp-v1</code> configuration (use the Rollback Console on the Staging Release Gate tab).<br>
+                    2. Reach out to the <b>NLP ML Engineering Team</b> to adjust prompt templates and retrain model parameters for specialties with F1 regressions.<br>
+                    3. Reach out to the <b>Clinical Billing & Compliance Director</b> to confirm NCCI rules and verify modifier guidelines for the flagged records in the Explainable Audit Ledger.
+                </p>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
