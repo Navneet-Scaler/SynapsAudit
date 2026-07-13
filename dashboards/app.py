@@ -436,6 +436,29 @@ with tab_overview:
             )
 
     # Dynamic Layperson box for Executive Overview tab
+    if selected_model == "clinical-nlp-v2":
+        if gate_failed:
+            next_steps_html = (
+                "<b>If the Release Gate is Blocked:</b><br>"
+                "1. Revert staging release to the stable baseline (using the Rollback Console on the Staging Release Gate tab).<br>"
+                "2. Reach out to the <b>NLP ML Engineering Team</b> to calibrate prompt templates for specialties experiencing F1 score drops.<br>"
+                "3. Reach out to the <b>Clinical Billing & Compliance Director</b> to confirm NCCI rules and review modifier guidelines."
+            )
+        else:
+            next_steps_html = (
+                "<b>If the Release Gate is Passed:</b><br>"
+                "1. Proceed to staging approval for the candidate <code>clinical-nlp-v2</code>.<br>"
+                "2. Reach out to the <b>DevOps & CI/CD Pipeline Lead</b> to promote the code release.<br>"
+                "3. Notify the <b>Clinical Billing & Compliance Director</b> of the pending production deployment."
+            )
+    else:
+        # clinical-nlp-v1 stable reference
+        next_steps_html = (
+            "<b>Stable Production Baseline Selected:</b><br>"
+            "You are inspecting the currently active, stable baseline model (<code>clinical-nlp-v1</code>) running in production. "
+            "To propose billing rule changes or report claim errors, reach out directly to the <b>Clinical Billing & Compliance Director</b>."
+        )
+
     st.markdown("---")
     st.markdown(
         f"""
@@ -470,10 +493,7 @@ with tab_overview:
             <div style="background-color:#0F172A; border-radius:4px; padding:12px; border:1px solid #334155;">
                 <h4 style="color:#F472B6; font-size:14px; margin-top:0; margin-bottom:8px;">🚀 Next Steps & Who to Reach Out To</h4>
                 <p style="font-size:13px; color:#94A3B8; line-height:1.5; margin-bottom:0;">
-                    <b>If the Release Gate is Blocked:</b><br>
-                    1. Revert to the stable <code>clinical-nlp-v1</code> configuration (use the Rollback Console on the Staging Release Gate tab).<br>
-                    2. Reach out to the <b>NLP ML Engineering Team</b> to adjust prompt templates and retrain model parameters for specialties with F1 regressions.<br>
-                    3. Reach out to the <b>Clinical Billing & Compliance Director</b> to confirm NCCI rules and verify modifier guidelines for the flagged records in the Explainable Audit Ledger.
+                    {next_steps_html}
                 </p>
             </div>
         </div>
