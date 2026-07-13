@@ -59,6 +59,33 @@ def run_release_gate():
     else:
         print("  [PASS] Modifier rules satisfied.")
         
+    # Calculate financial leakage and audit metrics for release gate
+    cursor.execute("SELECT record_id, model_version, error_type, risk_score FROM compliance_audit_results")
+    v2_violations = [{"error_type": row[2], "risk_score": row[3]} for row in cursor.fetchall() if row[1] == 'clinical-nlp-v2']
+    
+    from src.metrics import calculate_financial_impact
+    fin_impact = calculate_financial_impact(v2_violations)
+    leakage = fin_impact["revenue_leakage"]
+    liability = fin_impact["rejection_liability"]
+    ar_delay = fin_impact["max_ar_delay_days"]
+    
+    print(f"\nFinancial Revenue Assurance Audit:")
+    print(f"  - Estimated Candidate Revenue Leakage: ${leakage:,.2f}")
+    print(f"  - Claim Rejection Liability Penalty: ${liability:,.2f}")
+    print(f"  - Max Projected A/R Delay: {ar_delay} Days")
+    
+    if leakage > 1000.0:
+        print("  [FAIL] Critical revenue leakage exceeds tolerance threshold (>$1,000.00)!")
+        passed = False
+    else:
+        print("  [PASS] Revenue leakage is within staging limits.")
+        
+    if ar_delay > 10:
+        print("  [FAIL] Max A/R delay exceeds tolerance threshold (>10 Days)!")
+        passed = False
+    else:
+        print("  [PASS] A/R delay is within staging limits.")
+
     c.close()
     
     print("\n====================================================")

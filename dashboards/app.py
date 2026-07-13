@@ -240,6 +240,15 @@ hcc_miss_rate = hcc_miss / total_records if total_records > 0 else 0.0
 unit_mismatch = len(filtered_audit_df[(filtered_audit_df["model_version"] == selected_model) & (filtered_audit_df["error_type"] == "unit_confusion")])
 unit_mismatch_rate = unit_mismatch / total_records if total_records > 0 else 0.0
 
+# Compute dynamic financial impact metrics
+violations_list = [{"error_type": row["error_type"], "risk_score": row["risk_score"]} 
+                   for _, row in filtered_audit_df[filtered_audit_df["model_version"] == selected_model].iterrows()]
+from src.metrics import calculate_financial_impact
+fin_metrics = calculate_financial_impact(violations_list)
+active_leakage = fin_metrics["revenue_leakage"]
+active_liability = fin_metrics["rejection_liability"]
+active_ar_delay = fin_metrics["max_ar_delay_days"]
+
 # Model Drift Score
 comparison_dict = regression.compare_versions()
 if selected_specialty != "All":
@@ -274,24 +283,24 @@ with kpi_col2:
 with kpi_col3:
     st.markdown(
         f'<div class="metric-card">'
-        f'<div class="metric-label">HCC Miss Rate</div>'
-        f'<div class="metric-val-amber">{hcc_miss_rate:.1%}</div>'
+        f'<div class="metric-label">Revenue Leakage</div>'
+        f'<div class="metric-val-rose">${active_leakage:,.0f}</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 with kpi_col4:
     st.markdown(
         f'<div class="metric-card">'
-        f'<div class="metric-label">Unit Mismatch</div>'
-        f'<div class="metric-val-rose">{unit_mismatch_rate:.1%}</div>'
+        f'<div class="metric-label">Rejection Liability</div>'
+        f'<div class="metric-val-amber">${active_liability:,.0f}</div>'
         f'</div>',
         unsafe_allow_html=True
     )
 with kpi_col5:
     st.markdown(
         f'<div class="metric-card">'
-        f'<div class="metric-label">Model Drift Delta</div>'
-        f'<div class="{"metric-val-rose" if avg_delta < 0 else "metric-val-teal"}">{avg_delta:+.3f}</div>'
+        f'<div class="metric-label">A/R Delay Risk</div>'
+        f'<div class="metric-val">{active_ar_delay} Days</div>'
         f'</div>',
         unsafe_allow_html=True
     )

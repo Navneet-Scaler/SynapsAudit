@@ -1,5 +1,7 @@
 import pandas as pd
-from src.metrics import compute_classification_metrics
+import os
+import sqlite3
+from src.metrics import compute_classification_metrics, calculate_financial_impact
 
 class RegressionEngine:
     def __init__(self, loader):
@@ -51,14 +53,41 @@ class RegressionEngine:
                     if len(v1_matched - v2_matched) > 0:
                         regressions += 1
             
-            v1_avg_f1 = sum(v1_f1s) / len(v1_f1s) if v1_f1s else 0.0
-            v2_avg_f1 = sum(v2_f1s) / len(v2_f1s) if v2_f1s else 0.0
+            # Calculate financial metrics for v1 and v2 in this specialty
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+            db_path = os.path.join(project_root, "data", "synapse_audit.db")
             
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT record_id, model_version, error_type, risk_score FROM compliance_audit_results")
+            all_violations = cursor.fetchall()
+            conn.close()
+
+            v1_rec_ids = set(v1_spec["record_id"])
+            v2_rec_ids = set(v2_spec["record_id"])
+            
+            v1_violations = [{"error_type": error_type, "risk_score": risk_score} 
+                             for rec_id, model_version, error_type, risk_score in all_violations 
+                             if model_version == v1_model and rec_id in v1_rec_ids]
+            
+            v2_violations = [{"error_type": error_type, "risk_score": risk_score} 
+                             for rec_id, model_version, error_type, risk_score in all_violations 
+                             if model_version == v2_model and rec_id in v2_rec_ids]
+            
+            v1_fin = calculate_financial_impact(v1_violations)
+            v2_fin = calculate_financial_impact(v2_violations)
+
             comparison[spec] = {
                 "v1_f1": round(v1_avg_f1, 4),
                 "v2_f1": round(v2_avg_f1, 4),
                 "delta": round(v2_avg_f1 - v1_avg_f1, 4),
-                "regression_records_count": regressions
+                "regression_records_count": regressions,
+                "v1_leakage": v1_fin["revenue_leakage"],
+                "v2_leakage": v2_fin["revenue_leakage"],
+                "v1_liability": v1_fin["rejection_liability"],
+                "v2_liability": v2_fin["rejection_liability"],
+                "v1_ar_delay": v1_fin["max_ar_delay_days"],
+                "v2_ar_delay": v2_fin["max_ar_delay_days"],
             }
             
         return comparison
