@@ -53,6 +53,9 @@ class RegressionEngine:
                     if len(v1_matched - v2_matched) > 0:
                         regressions += 1
             
+            v1_avg_f1 = sum(v1_f1s) / len(v1_f1s) if v1_f1s else 0.0
+            v2_avg_f1 = sum(v2_f1s) / len(v2_f1s) if v2_f1s else 0.0
+            
             # Calculate financial metrics for v1 and v2 in this specialty
             project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
             db_path = os.path.join(project_root, "data", "synapse_audit.db")
