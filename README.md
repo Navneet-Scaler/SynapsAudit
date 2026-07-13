@@ -14,7 +14,7 @@ This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinic
 
 ---
 
-## Visual Workflow & Pipeline Architecture
+### Visual Workflow & Pipeline Architecture
 
 ```mermaid
 graph LR
@@ -26,21 +26,21 @@ graph LR
     classDef pass fill:#064E3B,stroke:#34D399,stroke-width:1.5px,color:#D1FAE5;
 
     %% Data Nodes
-    A["📂 Clinical Notes"]:::input
-    B["🤖 AI Predictions"]:::input
+    A["Clinical Note Input <br> (EHR Charts)"]:::input
+    B["AI Coding Predictions <br> (CPT / ICD-10 / Modifiers)"]:::input
 
     %% Processing Nodes
-    C["⚙️ SynapseAudit"]:::engine
-    D{"🛡️ Rules Check"}:::engine
+    C["SynapseAudit Loader <br> (Text Highlighting & Alignment)"]:::engine
+    D{"Rules Verification <br> (Modifier, HCC, Unit Check)"}:::engine
 
     %% Review Nodes
-    E["📊 Compliance App"]:::metric
-    F["🔍 Audit Ledger"]:::metric
+    E["Drift & Performance Console <br> (F1 & Kappa Metrics)"]:::metric
+    F["Explainable Audit Ledger <br> (Auditor Agree/Disagree)"]:::metric
 
     %% Gate Decisions
-    G{"🚦 Release Gate"}:::gate
-    H["Deploy Model"]:::pass
-    I["Rollback Model"]:::gate
+    G{"CI/CD Release Gate <br> (Tolerance Thresholds)"}:::gate
+    H["Deploy Candidate Model"]:::pass
+    I["Rollback to Stable Model"]:::gate
 
     %% Connections
     A & B --> C
@@ -57,17 +57,19 @@ graph LR
 > 
 > **1. What is actually happening here?**
 > *   **The Doctor's Work**: When you visit a doctor, they write a detailed clinical note summarizing your symptoms, diagnoses, and treatments.
-> *   **The AI's Job**: Hospitals use Clinical NLP AI models to read these medical notes and translate them into standardized billing codes (like ICD-10 for diseases and CPT for procedures).
-> *   **The Insurance Claim**: The hospital sends these codes to the insurance company to request payment.
+> *   **The AI's Job**: Hospitals use clinical autonomous coding engines (like **Arintra**) to read these notes and translate them into standardized billing codes (ICD-10, CPT, and modifiers) to request payment from insurance companies.
+> *   **Arintra's Engine vs. SynapseAudit**:
+>     *   **Arintra's Engine**: Actually does the clinical coding (inputting notes, predicting and producing billing codes directly from EHR systems like Epic or Cerner without human coders).
+>     *   **SynapseAudit**: Is the QA Evaluation suite that tests and stress-tests coding outputs. It doesn't write codes itself; it checks if the AI-predicted codes (which could come from an engine like Arintra's) have regressed or violated compliance rules.
 > 
 > **2. Why is this validation engine (SynapseAudit) needed?**
-> *   **If the AI under-codes (Misses details)**: For example, if the AI misses that a patient has chronic diabetes (an HCC code), the hospital gets paid less than they should.
-> *   **If the AI over-codes (Exaggerates details) or forgets billing rules**: For example, if the AI lists a procedure but forgets to attach a mandatory billing modifier (Modifier 25), the insurance company immediately rejects the claim. This delays hospital payments and triggers federal audits (compliance liabilities).
+> *   **If the AI under-codes (Misses details)**: If the AI misses that a patient has chronic diabetes (an HCC code), the hospital gets paid less than they should.
+> *   **If the AI over-codes (Exaggerates details) or forgets billing rules**: If the AI lists a procedure but forgets to attach a mandatory billing modifier (Modifier 25), the insurance company immediately rejects the claim. This delays hospital payments and triggers federal audits (compliance liabilities).
 > *   **The Problem of "AI Drift"**: Software updates or prompt tweaks to the AI model can cause it to suddenly lose accuracy on specific specialties (e.g., Cardiology), leading to systemic billing failures.
 > 
 > **3. Who pays us for this service?**
-> *   **Hospital Networks & Healthcare Systems**: They pay for this tool to prevent millions of dollars in insurance claim rejections and audits.
-> *   **Autonomous AI Coding Vendors (like Arintra)**: They pay for this engine as a quality assurance tool to verify and stress-test new prompt updates or AI versions before releasing them to their hospital clients.
+> *   **Hospital Networks & Healthcare Systems**: They pay for this tool to prevent millions of dollars in insurance claim rejections and compliance audits.
+> *   **Autonomous AI Coding Vendors (like Arintra)**: An AI coding vendor like Arintra uses an internal engine like SynapseAudit to run regression audits on their own coding models whenever their engineers release a new version or change prompt templates.
 > 
 > *SynapseAudit acts as the regression testing gate—making sure that upgrading the AI doesn't cause it to become worse at coding and bankrupt the hospital.*
 
