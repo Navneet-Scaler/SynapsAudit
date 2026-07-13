@@ -11,6 +11,11 @@ import sys
 # Ensure project root is in path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Force reload of local src modules by removing them from sys.modules cache
+for mod in list(sys.modules.keys()):
+    if mod.startswith("src"):
+        del sys.modules[mod]
+
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 DEFAULT_DB_PATH = os.path.join(PROJECT_ROOT, "data", "synapse_audit.db")
 
