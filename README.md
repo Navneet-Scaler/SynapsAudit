@@ -17,54 +17,39 @@ This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinic
 ## Visual Workflow & Pipeline Architecture
 
 ```mermaid
-flowchart TD
-    subgraph Input_Data [Evaluation Datasets]
-        A["MIMIC-IV Note Summaries (Deidentified)"]
-        B["MTSamples Consult Notes"]
-        C["Synthetic Safety Edge-Cases"]
-    end
+graph LR
+    %% Styling Classes
+    classDef input fill:#1E293B,stroke:#475569,stroke-width:1px,color:#F8FAFC;
+    classDef engine fill:#0F172A,stroke:#0D9488,stroke-width:2px,color:#F1F5F9;
+    classDef metric fill:#1E293B,stroke:#334155,stroke-width:1px,color:#F8FAFC;
+    classDef gate fill:#7F1D1D,stroke:#F87171,stroke-width:1.5px,color:#FEE2E2;
+    classDef pass fill:#064E3B,stroke:#34D399,stroke-width:1.5px,color:#D1FAE5;
 
-    subgraph NLP_Pipeline [NLP Model Outputs]
-        D["Baseline Version (clinical-nlp-v1)"]
-        E["Candidate Version (clinical-nlp-v2)"]
-    end
+    %% Data Nodes
+    A["📂 Clinical Notes <br> (MIMIC-IV, MTSamples)"]:::input
+    B["🤖 Model Predictions <br> (v1 Baseline & v2 Candidate)"]:::input
 
-    subgraph SynapseAudit [SynapseAudit Engine]
-        F["Dataset Loader"]
-        G["Clinical Parser (Evidence-Spans)"]
-        H["Compliance Rules Engine"]
-        
-        subgraph Rules [Billing Rules Engine]
-            H1["Modifier 25 Checks"]
-            H2["HCC Miss Flags"]
-            H3["Unit Confusion Checks"]
-            H4["NCCI Conflict Detection"]
-        end
-    end
+    %% Processing Nodes
+    C["⚙️ SynapseAudit Engine <br> (Dataset Loader & Parser)"]:::engine
+    D{"🛡️ Compliance Rules <br> (Modifier 25, HCC, Unit Check)"}:::engine
 
-    subgraph Analytics_Interface [Staging & Review]
-        I["SQLite Analytics (SQL Drift Queries)"]
-        J["Streamlit Compliance Dashboard"]
-        K["Explainable Audit Ledger (Adjudication)"]
-    end
+    %% Review Nodes
+    E["📊 Compliance Console <br> (Drift Matrix & Heatmaps)"]:::metric
+    F["🔍 Audit Ledger <br> (Evidence Highlighting)"]:::metric
 
-    subgraph Pipeline_Gate [Release Staging Gate]
-        L{"Pass Gate Metrics?"}
-        M["Deploy Candidate v2 to Staging"]
-        N["Block Deployment / Trigger v1 Rollback"]
-    end
+    %% Gate Decisions
+    G{"🚦 Release Gate Check <br> (F1 Drift & Safety Rules)"}:::gate
+    H["Deploy Candidate v2"]:::pass
+    I["Execute Rollback to v1"]:::gate
 
-    Input_Data --> |Load notes| F
-    F --> |Parse predictions| D & E
-    D & E --> G
-    G --> H
-    H --> H1 & H2 & H3 & H4
-    H1 & H2 & H3 & H4 --> I
-    I --> J
-    J --> K
-    K --> L
-    L -->|Yes| M
-    L -->|No| N
+    %% Connections
+    A & B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G -->|Pass| H
+    G -->|Fail| I
 ```
 
 ---
