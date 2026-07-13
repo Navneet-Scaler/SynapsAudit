@@ -1,16 +1,16 @@
-# Strategic Pivot Report: Clinical NLP Coding Regression Analysis
+# Strategic Pivot Report: Clinical NLP Revenue Assurance Audit
 
 ## Executive Summary
-This report analyzes the performance comparison between the baseline Clinical NLP coding system (**v1**) and the proposed updated candidate system (**v2**). The analysis is performed across multiple clinical specialties using simulated MIMIC-IV-Note discharge summaries, MTSamples specialty notes, and custom edge-case records.
+This report analyzes the performance comparison between the baseline Clinical NLP coding system (**v1**) and the proposed candidate system (**v2**). The analysis is performed across multiple clinical specialties using simulated MIMIC-IV-Note discharge summaries, MTSamples specialty notes, and custom edge-case records.
 
-Based on our deterministic regression evaluation and release gate audit, we recommend a **Conditional Rollback & Strategic Pivot** prior to staging deployment due to severe regression behavior in critical compliance categories.
+Based on our deterministic regression evaluation and release gate audit, we recommend a **Conditional Rollback & Strategic Pivot** prior to staging deployment due to severe regression behavior in critical revenue assurance categories.
 
 ---
 
-## Why Offline Regression Testing is Required
-Deploying clinical coding LLMs directly to production without deterministic offline validation exposes healthcare systems to major financial and regulatory liabilities:
+## Why Offline Revenue Assurance is Required
+Deploying clinical coding LLMs directly to production without deterministic offline validation exposes healthcare systems to major financial leakage and claim rejection risks:
 1. **Compliance and Audit Penalties**: Over-coding (billing for higher-level E/M services than documented or using incorrect modifiers) results in Office of Inspector General (OIG) audits and treble-damage penalties under the False Claims Act.
-2. **Claim Denials**: Under-coding or NCCI conflicts result in immediate automated claim rejections, increasing Accounts Receivable (AR) days and reducing net patient revenue.
+2. **Claim Denials & Revenue Leakage**: Under-coding (missed chronic conditions or procedures) causes direct revenue leakage (up to 5% of net patient revenue), while NCCI conflicts result in immediate automated claim rejections, increasing Accounts Receivable (AR) days by over 50%.
 3. **Prompt and Model Fragility**: Micro-adjustments in LLM system prompts or base model weights can cause catastrophic degradation in specific medical codes (e.g., losing modifier 25 attachments or confusing `mg` with `mcg`).
 
 ---

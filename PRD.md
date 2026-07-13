@@ -1,13 +1,13 @@
 # Product Requirement Document (PRD)
 
 ## 1. Problem Statement & Objectives
-Clinical Natural Language Processing (NLP) models are increasingly used to automate medical coding (ICD-10, CPT, modifiers, and HCC risk adjustments) from clinical notes. However, LLM prompt tuning, model upgrades, and software releases introduce regression risks:
-- Missing diagnoses causing under-billing or lost HCC risk adjustments.
-- Over-coding (e.g., E/M level upgrades or unsupported codes) leading to severe compliance and audit liabilities.
+Every dollar in a healthcare system flows directly through medical coding. Clinical Natural Language Processing (NLP) models are increasingly used to automate medical coding (ICD-10, CPT, modifiers, and HCC risk adjustments) from clinical notes. However, LLM prompt tuning, model upgrades, and software releases introduce regression risks:
+- Missing diagnoses causing severe **revenue leakage** and lost HCC risk adjustments.
+- Over-coding (e.g., E/M level upgrades or unsupported codes) leading to compliance penalties and audit liabilities.
 - Unit confusion in dosages (e.g., matching `mg` instead of `mcg`) affecting clinical safety verification.
 - Code drift across model versions, causing silent systemic degradation.
 
-**SynapseAudit** is an offline deterministic validation and regression engine that serves as a quality assurance gate for clinical NLP outputs. It allows compliance officers and ML engineers to compare new prompts or models against a human-adjudicated gold-standard truth set, run deterministic compliance rules, visualize code drift, and enforce release gates before models are deployed.
+**SynapseAudit** is an offline **Clinical NLP Revenue Assurance & Regression Engine** that serves as a quality assurance gate for clinical NLP outputs. It allows clinical revenue assurance teams and ML engineers to compare new prompts or models against a human-adjudicated gold-standard truth set, run deterministic compliance rules, visualize code drift, and enforce release gates before models are deployed.
 
 ## 2. Key Terminology & Metrics
 

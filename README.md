@@ -4,13 +4,13 @@
 [![Live Dashboard](https://img.shields.io/badge/Live-Dashboard-green?logo=streamlit)](https://navneet-scaler-synapsaudit-dashboardsapp-k5q7lf.streamlit.app/)
 
 ### The Problem
-Changes in base clinical NLP models or LLM prompt variations introduce silent code and prompt drift, leading to under-billing (missed HCC codes) or severe compliance risks (omitted billing modifiers and overcoded E/M levels).
+Every dollar in a healthcare system flows directly through medical coding. Changes in base clinical NLP models or LLM prompt variations introduce silent code and prompt drift, leading to severe **revenue leakage** (missed chronic condition HCC codes) and immediate **billing claim rejections** (omitted billing modifiers and overcoded E/M levels).
 
 ### The Solution
-**SynapseAudit** is an offline clinical NLP regression and compliance engine designed for deterministic validation of model-predicted ICD-10 and CPT codes, modifier logic, and HCC capture against a human-adjudicated gold-standard dataset.
+**SynapseAudit** is an offline **Clinical NLP Revenue Assurance & Regression Engine** designed for deterministic validation of model-predicted CPT/ICD-10 codes, modifier logic, and HCC capture against a human-adjudicated gold-standard dataset.
 
 ### The Target Audience
-This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinical Compliance Officers** to audit model revisions and enforce safety gates before deploying NLP pipelines.
+This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinical Revenue Assurance Teams** to audit model revisions and enforce deployment safety gates before updates go live.
 
 ---
 

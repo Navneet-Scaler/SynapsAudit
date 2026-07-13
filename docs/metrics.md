@@ -1,16 +1,16 @@
-# Clinical QA Validation Metrics Reference
+# Clinical Revenue Assurance Metrics Reference
 
-This document defines the core performance and compliance metrics tracked by the SynapseAudit regression engine.
+This document defines the core performance and audit risk metrics tracked by the SynapseAudit revenue assurance engine.
 
 ## Metric Glossary
 
 - **Exact-Match Accuracy**: The percentage of clinical encounters where the model's predicted codes perfectly match the gold-standard codes.
-- **Modifier Accuracy**: The percentage of eligible encounters where Modifier 25 is correctly attached to E/M codes when a separate procedure is performed.
-- **Unit Accuracy**: The percentage of medication dosage matches where the predicted code matches the correct unit (e.g., `mcg` vs. `mg`).
-- **HCC Capture Rate**: The percentage of gold-standard Hierarchical Condition Categories (HCCs) correctly captured by the model.
+- **Modifier Accuracy**: The percentage of eligible encounters where Modifier 25 is correctly attached to E/M codes when a separate procedure is performed (prevents billing denials).
+- **Unit Accuracy**: The percentage of medication dosage matches where the predicted code matches the correct unit (e.g., `mcg` vs. `mg`), preventing clinical safety risks.
+- **HCC Capture Rate**: The percentage of gold-standard Hierarchical Condition Categories (HCCs) correctly captured by the model (prevents risk-adjustment revenue leakage).
 - **Regression Delta**: The net performance difference (F1, Kappa, or accuracy) between the baseline model and the candidate model.
 - **Cohen’s Kappa ($\kappa$)**: Statistical measure of agreement between the model's predictions and human coders, adjusted for chance agreement.
-- **Claim Deniability Risk Index (CDRI)**: A composite compliance score indicating the density of NCCI conflicts, wrong modifiers, and overcoded E/M levels.
+- **Claim Deniability Risk Index (CDRI)**: A composite score indicating the density of billing errors (NCCI conflicts, wrong modifiers, overcoded E/M levels) introducing payment rejection risk.
 
 ---
 
