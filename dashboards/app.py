@@ -183,22 +183,40 @@ if st.sidebar.button("Reset Filters", use_container_width=True):
     st.session_state["selected_record"] = "REC001"
     st.rerun()
 
+# Helper to get average confidence score for filtering
+def parse_avg_conf(conf_str):
+    if not conf_str:
+        return 1.0
+    try:
+        scores = [float(x.strip()) for x in str(conf_str).split(",") if x.strip()]
+        return sum(scores) / len(scores) if scores else 1.0
+    except Exception:
+        return 1.0
+
+# Calculate average confidence helper column
+predictions["avg_conf"] = predictions["confidence_scores"].apply(parse_avg_conf)
+
 model_versions = ["clinical-nlp-v2", "clinical-nlp-v1"]
 selected_model = st.sidebar.selectbox("Model Under Evaluation", model_versions, index=0)
 
-# Load data based on selection
+# Load compliance results
 conn = sqlite3.connect(DEFAULT_DB_PATH)
 audit_df = pd.read_sql_query("SELECT * FROM compliance_audit_results", conn)
 conn.close()
-
-# Filter by selected model
-model_audit_df = audit_df[audit_df["model_version"] == selected_model]
 
 specialties = ["All"] + sorted(list(encounters["specialty"].unique()))
 selected_specialty = st.sidebar.selectbox("Filter Specialty", specialties, index=0)
 
 error_types = ["All", "wrong_modifier", "unit_confusion", "hcc_miss", "overcode", "ncci_conflict"]
 selected_error = st.sidebar.selectbox("Filter Compliance Error", error_types, index=0)
+
+note_sections = ["All"] + sorted(list(encounters["note_section"].unique()))
+selected_section = st.sidebar.selectbox("Filter Note Section", note_sections, index=0)
+
+selected_conf = st.sidebar.slider("Min Model Confidence", 0.0, 1.0, 0.0, 0.05)
+selected_risk = st.sidebar.slider("Min Risk Score Filter", 0.0, 5.0, 0.0, 0.5)
+
+code_search = st.sidebar.text_input("Search Billing Code (e.g. 93451)", "")
 
 st.sidebar.markdown("---")
 st.sidebar.markdown('<p style="font-size:11px; color:#64748B;">This console evaluates clinical coding regression parameters for release staging.</p>', unsafe_allow_html=True)
@@ -219,17 +237,35 @@ st.markdown(
 # ---------------------------------------------------------
 # Metric Calculation
 # ---------------------------------------------------------
-# Filter encounters by specialty if selected
-filtered_encounters = encounters
+# Filter encounters
+filtered_encounters = encounters.copy()
 if selected_specialty != "All":
-    filtered_encounters = encounters[encounters["specialty"] == selected_specialty]
+    filtered_encounters = filtered_encounters[filtered_encounters["specialty"] == selected_specialty]
+if selected_section != "All":
+    filtered_encounters = filtered_encounters[filtered_encounters["note_section"] == selected_section]
+if code_search.strip():
+    code_val = code_search.strip()
+    matching_pred_records = predictions[predictions["predicted_codes"].str.contains(code_val, case=False, na=False)]["record_id"]
+    filtered_encounters = filtered_encounters[
+        filtered_encounters["ground_truth_codes"].str.contains(code_val, case=False, na=False) |
+        filtered_encounters["record_id"].isin(matching_pred_records)
+    ]
+
+# Filter predictions and audits
+filtered_record_ids = set(filtered_encounters["record_id"])
+filtered_predictions = predictions[predictions["record_id"].isin(filtered_record_ids)]
+filtered_predictions = filtered_predictions[filtered_predictions["avg_conf"] >= selected_conf]
+
+# Re-resolve the matched record IDs after predictions filtering
+filtered_record_ids = set(filtered_predictions["record_id"])
+filtered_encounters = filtered_encounters[filtered_encounters["record_id"].isin(filtered_record_ids)]
 
 total_records = len(filtered_encounters)
 
-# Filter predictions and audits based on selected specialty
-filtered_record_ids = set(filtered_encounters["record_id"])
-filtered_predictions = predictions[predictions["record_id"].isin(filtered_record_ids)]
 filtered_audit_df = audit_df[audit_df["record_id"].isin(filtered_record_ids)]
+if selected_error != "All":
+    filtered_audit_df = filtered_audit_df[filtered_audit_df["error_type"] == selected_error]
+filtered_audit_df = filtered_audit_df[filtered_audit_df["risk_score"] >= selected_risk]
 
 # Compute Exact Match Accuracy for selected model
 active_preds = filtered_predictions[filtered_predictions["model_version"] == selected_model]
