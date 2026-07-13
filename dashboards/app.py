@@ -736,23 +736,20 @@ st.markdown("---")
 st.markdown(
     """
     <div style="background-color:#1E293B; border-left: 5px solid #0D9488; border-radius: 6px; padding: 20px; margin-top: 25px; margin-bottom: 25px;">
-        <h3 style="color:#F1F5F9; margin-top:0; font-size:18px;">💡 Layperson's Guide: What is SynapseAudit & Why Does It Matter?</h3>
+        <h3 style="color:#F1F5F9; margin-top:0; font-size:18px;">💡 Layperson's Guide: Understanding Dashboard Settings & Metrics</h3>
         <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-            <b>The Real-World Context (Doctor 🩺 → AI 🤖 → Insurance 💰):</b><br>
-            When you see a doctor, they write a detailed document called a <i>clinical note</i> describing your medical visit. Because clinical notes are unstructured text, healthcare systems use <b>Autonomous Medical Coding AI</b> (like Arintra's engine) to read these notes and automatically translate them into billing codes (ICD-10 for diagnoses, CPT for procedures, and billing modifiers). These codes are submitted to insurance companies for payment.
+            <b>Active Sidebar Settings & Filters:</b><br>
+            *   <b>Select Evaluation Model</b>: Lets you toggle between the stable baseline model (<code>clinical-nlp-v1</code>) currently used in production and the new candidate model (<code>clinical-nlp-v2</code>) being tested.
+            *   <b>Filter by Specialty</b>: Focuses the entire dashboard on a single clinical department (e.g., Cardiology, Endocrinology) to verify performance.
         </p>
         <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:12px;">
-            <b>What Problem Does SynapseAudit Solve?</b><br>
-            AI models are constantly updated (new prompts, updated LLMs, fresh training data). Sometimes, an update makes the AI perform better overall, but causes a "silent regression" in specific specialties. For example:
-            <ul style="color:#94A3B8; font-size:14px; margin-left:15px; margin-top:5px;">
-                <li><b>Revenue Leakage ($):</b> If the AI misses a chronic condition diagnosis (like diabetes or stage 4 kidney disease), the hospital loses thousands of dollars in risk-adjustment payments.</li>
-                <li><b>Claim Rejections & Delays ($):</b> If the AI lists a procedure but forgets to add a mandatory billing modifier (like Modifier 25), the insurance company instantly rejects the claim. This forces manual rework and delays payments (increasing A/R Days).</li>
-                <li><b>Clinical Safety Errors:</b> Confusing dosage units (e.g. <code>mg</code> vs <code>mcg</code>) can lead to serious patient care issues.</li>
-            </ul>
-        </p>
-        <p style="font-size:14px; color:#94A3B8; line-height:1.6; margin-bottom:0;">
-            <b>How SynapseAudit Works (Basic to Advanced):</b><br>
-            Instead of releasing an AI update blindly to hospitals, SynapseAudit acts as an <b>offline staging release gate</b>. It runs the new AI candidate model (v2) alongside the stable production baseline (v1) on 30+ complex multi-specialty clinical notes. It checks for F1 score dropouts, rules compliance, and calculates the exact **Estimated Revenue Leakage ($)** and **Rejection Liabilities ($)** in real-time. If the candidate version leaks revenue or misses billing modifiers, the release gate is blocked, and we execute an automated rollback.
+            <b>Understanding the Top KPI Metrics:</b><br>
+            *   <b>Exact Match Acc</b>: The percentage of patient visits where the AI's billing codes were 100% identical to human coding results.
+            *   <b>Modifier Accuracy</b>: The AI's success rate in applying mandatory billing flags (like Modifier 25) when both a visit and a procedure happen on the same day.
+            *   <b>Revenue Leakage ($)</b>: Estimated annual money lost by the hospital because the AI forgot to document valid chronic disease codes (missed HCC codes).
+            *   <b>Rejection Liability ($)</b>: The financial penalty and claim rework costs expected due to violating insurance rules (e.g., NCCI procedure bundle conflicts or wrong modifiers).
+            *   <b>A/R Delay Risk (Days)</b>: The number of days hospital payments will be frozen in "Accounts Receivable" because the insurance company rejected the claim.
+            *   <b>Release Gate Status</b>: Displays <code>Passed</code> if the AI model meets all compliance standards, or <code>Blocked</code> if errors exceed safety thresholds.
         </p>
     </div>
     """,
