@@ -14,6 +14,61 @@ This engine is built for **Product Analysts**, **AI QA Engineers**, and **Clinic
 
 ---
 
+## Visual Workflow & Pipeline Architecture
+
+```mermaid
+flowchart TD
+    subgraph Input_Data [Evaluation Datasets]
+        A["MIMIC-IV Note Summaries (Deidentified)"]
+        B["MTSamples Consult Notes"]
+        C["Synthetic Safety Edge-Cases"]
+    end
+
+    subgraph NLP_Pipeline [NLP Model Outputs]
+        D["Baseline Version (clinical-nlp-v1)"]
+        E["Candidate Version (clinical-nlp-v2)"]
+    end
+
+    subgraph SynapseAudit [SynapseAudit Engine]
+        F["Dataset Loader"]
+        G["Clinical Parser (Evidence-Spans)"]
+        H["Compliance Rules Engine"]
+        
+        subgraph Rules [Billing Rules Engine]
+            H1["Modifier 25 Checks"]
+            H2["HCC Miss Flags"]
+            H3["Unit Confusion Checks"]
+            H4["NCCI Conflict Detection"]
+        end
+    end
+
+    subgraph Analytics_Interface [Staging & Review]
+        I["SQLite Analytics (SQL Drift Queries)"]
+        J["Streamlit Compliance Dashboard"]
+        K["Explainable Audit Ledger (Adjudication)"]
+    end
+
+    subgraph Pipeline_Gate [Release Staging Gate]
+        L{"Pass Gate Metrics?"}
+        M["Deploy Candidate v2 to Staging"]
+        N["Block Deployment / Trigger v1 Rollback"]
+    end
+
+    Input_Data --> |Load notes| F
+    F --> |Parse predictions| D & E
+    D & E --> G
+    G --> H
+    H --> H1 & H2 & H3 & H4
+    H1 & H2 & H3 & H4 --> I
+    I --> J
+    J --> K
+    K --> L
+    L -->|Yes| M
+    L -->|No| N
+```
+
+---
+
 ## Key Metrics
 
 | Metric | Definition |
