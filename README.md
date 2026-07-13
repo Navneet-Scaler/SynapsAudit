@@ -26,21 +26,21 @@ graph LR
     classDef pass fill:#064E3B,stroke:#34D399,stroke-width:1.5px,color:#D1FAE5;
 
     %% Data Nodes
-    A["📂 Clinical Notes <br> (MIMIC-IV, MTSamples)"]:::input
-    B["🤖 Model Predictions <br> (v1 Baseline & v2 Candidate)"]:::input
+    A["📂 Clinical Notes"]:::input
+    B["🤖 AI Predictions"]:::input
 
     %% Processing Nodes
-    C["⚙️ SynapseAudit Engine <br> (Dataset Loader & Parser)"]:::engine
-    D{"🛡️ Compliance Rules <br> (Modifier 25, HCC, Unit Check)"}:::engine
+    C["⚙️ SynapseAudit"]:::engine
+    D{"🛡️ Rules Check"}:::engine
 
     %% Review Nodes
-    E["📊 Compliance Console <br> (Drift Matrix & Heatmaps)"]:::metric
-    F["🔍 Audit Ledger <br> (Evidence Highlighting)"]:::metric
+    E["📊 Compliance App"]:::metric
+    F["🔍 Audit Ledger"]:::metric
 
     %% Gate Decisions
-    G{"🚦 Release Gate Check <br> (F1 Drift & Safety Rules)"}:::gate
-    H["Deploy Candidate v2"]:::pass
-    I["Execute Rollback to v1"]:::gate
+    G{"🚦 Release Gate"}:::gate
+    H["Deploy Model"]:::pass
+    I["Rollback Model"]:::gate
 
     %% Connections
     A & B --> C
@@ -51,6 +51,25 @@ graph LR
     G -->|Pass| H
     G -->|Fail| I
 ```
+
+> [!NOTE]
+> ### 💡 Understanding the Business: The "Doctor, AI, and Insurance" Story
+> 
+> **1. What is actually happening here?**
+> *   **The Doctor's Work**: When you visit a doctor, they write a detailed clinical note summarizing your symptoms, diagnoses, and treatments.
+> *   **The AI's Job**: Hospitals use Clinical NLP AI models to read these medical notes and translate them into standardized billing codes (like ICD-10 for diseases and CPT for procedures).
+> *   **The Insurance Claim**: The hospital sends these codes to the insurance company to request payment.
+> 
+> **2. Why is this validation engine (SynapseAudit) needed?**
+> *   **If the AI under-codes (Misses details)**: For example, if the AI misses that a patient has chronic diabetes (an HCC code), the hospital gets paid less than they should.
+> *   **If the AI over-codes (Exaggerates details) or forgets billing rules**: For example, if the AI lists a procedure but forgets to attach a mandatory billing modifier (Modifier 25), the insurance company immediately rejects the claim. This delays hospital payments and triggers federal audits (compliance liabilities).
+> *   **The Problem of "AI Drift"**: Software updates or prompt tweaks to the AI model can cause it to suddenly lose accuracy on specific specialties (e.g., Cardiology), leading to systemic billing failures.
+> 
+> **3. Who pays us for this service?**
+> *   **Hospital Networks & Healthcare Systems**: They pay for this tool to prevent millions of dollars in insurance claim rejections and audits.
+> *   **Autonomous AI Coding Vendors (like Arintra)**: They pay for this engine as a quality assurance tool to verify and stress-test new prompt updates or AI versions before releasing them to their hospital clients.
+> 
+> *SynapseAudit acts as the regression testing gate—making sure that upgrading the AI doesn't cause it to become worse at coding and bankrupt the hospital.*
 
 ---
 
