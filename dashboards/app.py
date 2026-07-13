@@ -413,7 +413,8 @@ with tab_specialty:
     h_df = db.get_drift_by_specialty()
     # Pivot for Heatmap visualization
     if not h_df.empty:
-        pivot_df = h_df.pivot(index='specialty', columns='error_type', values='error_count').fillna(0)
+        h_df_filtered = h_df[h_df["model_version"] == selected_model]
+        pivot_df = h_df_filtered.pivot_table(index='specialty', columns='error_type', values='error_count', aggfunc='sum').fillna(0)
         
         fig_heat = px.imshow(
             pivot_df, 
